@@ -1,33 +1,33 @@
-var express = require('express');
-var redisClient = require('redis'),
-		redisDB = redisClient.createClient();
+var index = require('./routes').router;
+var app = require('./routes').express();
 
-var app = express();
+var http = require('http');
 
-app.get('/api/nt/:id', (req, res) => {
-	redisDB.hgetall(`nt:${req.params.id}`, (err, result) => {
-		if (!err) {
-			res.send(result);
-		} else {
-			console.error("Redis error: " + err);
-			res.statusCode = 500;
-			res.send({error: "Redis error: " + err})
-		}
-	});
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    next();
 });
 
-app.get('/api/nt/:nt_id/ns/:ns_id', (req, res) => {
-	redisDB.hmget(`nt:${req.params.nt_id}`, `ns:${req.params.ns_id}`, (err, result) => {
-		if (!err) {
-			res.send(result);
-		} else {
-			console.error("Redis error: " + err);
-			res.statusCode = 500;
-			res.send({error: "Redis error: " + err})
-		}
-	});
+app.use('/', index);
+
+app.use(function(req, res, next){
+    console.error('Not found URL: %s',req.url);
+    res.status(404).send({ error: 'Not found' });
 });
 
-app.listen(1337, function(){
+app.use(function(err, req, res, next){
+    console.error('Internal error(%d): %s',res.statusCode,err.message);
+    res.status(err.status || 500).send({ error: err.message });
+});
+
+var server = http.createServer(app);
+server.listen(1337, function() {
     console.log('Express server listening on port 1337');
 });
+
+
+var udpListener = require('./udp_listener');
+udpListener.run();
