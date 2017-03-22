@@ -1,4 +1,4 @@
-var index = require('./routes').router;
+var route = require('./routes').router;
 var app = require('./routes').express();
 
 var http = require('http');
@@ -11,7 +11,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use('/', index);
+app.use('/', route);
 
 app.use(function(req, res, next){
     console.error('Not found URL: %s',req.url);

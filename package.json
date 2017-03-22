@@ -1,0 +1,30 @@
+{
+  "name": "mig",
+  "version": "1.0.0",
+  "description": "api to mic",
+  "main": "server.js",
+  "dependencies": {
+    "async": "^2.1.5",
+    "binary-parser": "^1.1.5",
+    "dateformat": "^2.0.0",
+    "dgram": "^1.0.1",
+    "express": "^4.15.0",
+    "redis": "^2.6.5",
+    "typebase": "^1.0.1",
+    "ws": "^2.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.asutp.local:Igelinmist/mig.git"
+  },
+  "keywords": [
+    "mig"
+  ],
+  "author": "Vasiliy N. Troyan",
+  "license": "ISC"
+}
