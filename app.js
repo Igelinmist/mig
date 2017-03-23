@@ -1,5 +1,5 @@
-var route = require('./routes').router;
-var app = require('./routes').express();
+var route = require('./services/routes').router;
+var app = require('./services/routes').express();
 
 var http = require('http');
 
@@ -29,5 +29,5 @@ server.listen(1337, function() {
 });
 
 
-var udpListener = require('./udp_listener');
+var udpListener = require('./services/udp_listener');
 udpListener.run();

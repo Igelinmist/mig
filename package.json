@@ -2,7 +2,7 @@
   "name": "mig",
   "version": "1.0.0",
   "description": "api to mic",
-  "main": "server.js",
+  "main": "app.js",
   "dependencies": {
     "async": "^2.1.5",
     "binary-parser": "^1.1.5",
@@ -16,7 +16,7 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
