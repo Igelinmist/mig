@@ -1,13 +1,14 @@
 function run() {
-	var dgram = require('dgram');
+	let dgram = require('dgram');
 
-	var Parser = require('binary-parser').Parser;
+	let Parser = require('binary-parser').Parser;
 
-	var redisClient = require('redis'),
+	let redisClient = require('redis'),
 			redisDB = redisClient.createClient();
 
-	var udpListener = dgram.createSocket('udp4');
+	let udpListener = dgram.createSocket('udp4');
 
+	let rValue = require('../routines').rValue;
 	/*
 		// с++ Структуры udp пакетов данных
 
@@ -45,14 +46,8 @@ function run() {
 		};
 	*/
 
-	function rValue(val) {
-		if (Math.abs(val) < 10) return val.toFixed(2);
-		if (Math.abs(val) < 1000) return val.toFixed(1);
-		return Math.round(val);
-	}
-
 	// Парсер заголовка
-	var udpHeader = new Parser()
+	let udpHeader = new Parser()
 		.int32le('nt')
 		.int32le('len')
 		.int32le('q')
@@ -63,7 +58,7 @@ function run() {
 		.uint32('tt');
 
 	// Парсер тэга
-	var udpTag = new Parser()
+	let udpTag = new Parser()
 		.floatle('value')
 		.uint16le('sw');
 
@@ -78,12 +73,12 @@ function run() {
 
 	udpListener.on('message', (msg, rinfo) => {
 		// Разбираем заголовок
-		var hdr = udpHeader.parse(msg.slice(0,32));
+		let hdr = udpHeader.parse(msg.slice(0,32));
 		redisDB.hmset(`nt${hdr.nt}`,['nt', hdr.nt, 'utime', hdr.t, 'quantity', hdr.q]);
 		// Разбираем тэги
-		var tags_arr = [];
-		for (var i = 0; i < hdr.q; i++) {
-			var tag = udpTag.parse(msg.slice(32 + i*6, 32 + i*6 + 6));
+		let tags_arr = [];
+		for (let i = 0; i < hdr.q; i++) {
+			let tag = udpTag.parse(msg.slice(32 + i*6, 32 + i*6 + 6));
 			tags_arr = tags_arr.concat(`ns${i}`, rValue(tag.value), `ns${i}sw`, tag.sw);
 		}
 
@@ -91,7 +86,7 @@ function run() {
 	});
 
 	udpListener.on('listening', () => {
-		var address = udpListener.address();
+		let address = udpListener.address();
 		console.log(`udpListener listening ${address.address}:${address.port}`);
 	});
 
