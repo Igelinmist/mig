@@ -69,11 +69,11 @@ function init(waitingResponse, options={}) {
     requestCounter--;
     // Разбираем заголовок
     let hdr = udpResHeader.parse(msg.slice(0,16));
-    exchangeResult[`nt: ${hdr.nt} ns: ${hdr.ns}`] = [];
+    exchangeResult[`nt${hdr.nt}ns${hdr.ns}`] = [];
     // Разбираем исторические значения
     for (let i = 0; i < hdr.d; i++) {
       let tag = udpTagVal.parse(msg.slice(16 + i * 12, 16 + (i + 1) * 12));
-      exchangeResult[`nt: ${hdr.nt} ns: ${hdr.ns}`].push([tag.tt * 1000, rValue(tag.value)]);
+      exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].push([tag.tt * 1000, rValue(tag.value)]);
     }
     if (requestCounter == 0) {
       waitingResponse.status(200).send(JSON.stringify(exchangeResult));
@@ -87,7 +87,6 @@ function init(waitingResponse, options={}) {
   udpRequester.askLast32Values = (tdc) => {
     let async = require('async');
     let ntnsRe = /nt(\d+)ns(\d+)/;
-   
     async.each(
       tdc,
       (prm, callback) => {
