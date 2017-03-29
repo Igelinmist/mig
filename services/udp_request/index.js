@@ -1,4 +1,8 @@
 function init(waitingResponse, options={}) {  
+  const STATUS_OK = 0;
+  const STATUS_SOCKET_ERROR = 1;
+  const STATUS_TIMEOUT = 2;
+
   let destServ = options.destServ || '192.168.20.5';
   let destPort = options.destPort || 13041;
   let localPort = options.localPort || 13031;
@@ -20,7 +24,7 @@ function init(waitingResponse, options={}) {
   let socket = require('dgram').createSocket('udp4');
   
   socket.on('error', (err) => {
-     console.log(err);
+     pushResult(STATUS_SOCKET_ERROR);
   });
 
   // Определение структуры буфера запроса
@@ -64,7 +68,6 @@ function init(waitingResponse, options={}) {
   socket.on('message', (msg, rinfo) => {
     // Разбираем заголовок
     let hdr = udpResHeader.parse(msg.slice(0,16));
-    exchangeResult[`nt${hdr.nt}ns${hdr.ns}`] = {data:[]};
     // Разбираем исторические значения
     for (let i = 0; i < hdr.d; i++) {
       let tag = udpTagVal.parse(msg.slice(16 + i * 12, 16 + (i + 1) * 12));
@@ -74,30 +77,29 @@ function init(waitingResponse, options={}) {
     iterator.next(true);
   });
 
+  function pushResult(status) {
+    socket.close();
+    for (var key in exchangeResult) {
+      exchangeResult[key].data.sort((a, b) => {
+        return a[0] - b[0];
+      });
+    }
+    waitingResponse.status(200).send({dataSet: exchangeResult, status: status});   
+  }
+
   function* reqIterator(tdc) {
-    let sthBad = false;
     let mesRes = false;
     for (let key in tdc) {
       // Each tdc element look like 'nt54ns32'
       let [nt, ns] = tdc[key].substring(2).split('ns').map((el) => parseInt(el));
       sendRequest(nt, ns);
       timeoutId = setTimeout(() => {
-        sthBad = true;
+        pushResult(STATUS_TIMEOUT);
       }, 5000);
-      if (sthBad) break;
       mesRes = yield;
       if (mesRes) clearTimeout(timeoutId);
     }
-    socket.close();
-
-    let names = require('../routines/names');
-    for (var key in exchangeResult) {
-      exchangeResult[key].data.sort((a, b) => {
-        return a[0] - b[0];
-      });
-      exchangeResult[key].label = names[key];
-    }
-    waitingResponse.status(200).send(exchangeResult);
+    pushResult(STATUS_OK);
   }
 
   let iterator;
@@ -106,6 +108,14 @@ function init(waitingResponse, options={}) {
   let udpRequester = new UdpRequester();
 
   udpRequester.askLast32Values = (tdc) => {
+    // Инициализация объекта ответа (хоть чем-то ответить...)
+    let names = require('../routines/names');
+    tdc.map((tag) => {
+      exchangeResult[tag] = {
+        data: [],
+        label: names[tag]
+      }
+    });
     iterator = reqIterator(tdc); // Инициализация итератора
     iterator.next();  // Первый пинок итератору. Дальше управляется ответами.
   };
