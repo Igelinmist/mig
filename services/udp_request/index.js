@@ -64,11 +64,11 @@ function init(waitingResponse, options={}) {
   socket.on('message', (msg, rinfo) => {
     // Разбираем заголовок
     let hdr = udpResHeader.parse(msg.slice(0,16));
-    exchangeResult[`nt${hdr.nt}ns${hdr.ns}`] = [];
+    exchangeResult[`nt${hdr.nt}ns${hdr.ns}`] = {data:[]};
     // Разбираем исторические значения
     for (let i = 0; i < hdr.d; i++) {
       let tag = udpTagVal.parse(msg.slice(16 + i * 12, 16 + (i + 1) * 12));
-      exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].push([tag.tt * 1000, rValue(tag.value)]);
+      exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].data.push([(tag.tt + 21600) * 1000, rValue(tag.value)]);
     }
     // console.log(`получил nt${hdr.nt}ns${hdr.ns}`);
     iterator.next(true);
@@ -89,6 +89,14 @@ function init(waitingResponse, options={}) {
       if (mesRes) clearTimeout(timeoutId);
     }
     socket.close();
+
+    let names = require('../routines/names');
+    for (var key in exchangeResult) {
+      exchangeResult[key].data.sort((a, b) => {
+        return a[0] - b[0];
+      });
+      exchangeResult[key].label = names[key];
+    }
     waitingResponse.status(200).send(exchangeResult);
   }
 
