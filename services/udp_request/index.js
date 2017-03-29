@@ -3,7 +3,6 @@ function init(waitingResponse, options={}) {
   let destPort = options.destPort || 13041;
   let localPort = options.localPort || 13031;
   let exchangeResult = {};
-  let requestCounter = 0;
 
   let Parser = require('binary-parser').Parser;
   // Парсер заголовка
@@ -12,7 +11,6 @@ function init(waitingResponse, options={}) {
     .uint32le('nt')
     .uint32le('ns')
     .uint32le('d');
-
   // Парсер исторического значения тэга
   let udpTagVal = new Parser()
     .uint32le('tt')
@@ -58,15 +56,12 @@ function init(waitingResponse, options={}) {
         p: localPort
     };
     reqStruct.pack(ptr, req);
-    socket.send(ptr.buf, destPort, destServ, () => {
-      requestCounter++;
-    });
+    socket.send(ptr.buf, destPort, destServ);
   };
   
   let rValue = require('../routines').rValue;
 
   socket.on('message', (msg, rinfo) => {
-    requestCounter--;
     // Разбираем заголовок
     let hdr = udpResHeader.parse(msg.slice(0,16));
     exchangeResult[`nt${hdr.nt}ns${hdr.ns}`] = [];
@@ -75,43 +70,39 @@ function init(waitingResponse, options={}) {
       let tag = udpTagVal.parse(msg.slice(16 + i * 12, 16 + (i + 1) * 12));
       exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].push([tag.tt * 1000, rValue(tag.value)]);
     }
-    if (requestCounter == 0) {
-      waitingResponse.status(200).send(JSON.stringify(exchangeResult));
-      socket.close();  
-    }
+    // console.log(`получил nt${hdr.nt}ns${hdr.ns}`);
+    iterator.next(true);
   });
+
+  function* reqIterator(tdc) {
+    let sthBad = false;
+    let mesRes = false;
+    for (let key in tdc) {
+      // Each tdc element look like 'nt54ns32'
+      let [nt, ns] = tdc[key].substring(2).split('ns').map((el) => parseInt(el));
+      sendRequest(nt, ns);
+      timeoutId = setTimeout(() => {
+        sthBad = true;
+      }, 5000);
+      if (sthBad) break;
+      mesRes = yield;
+      if (mesRes) clearTimeout(timeoutId);
+    }
+    socket.close();
+    waitingResponse.status(200).send(exchangeResult);
+  }
+
+  let iterator;
 
   function UdpRequester() {}
   let udpRequester = new UdpRequester();
 
   udpRequester.askLast32Values = (tdc) => {
-    let async = require('async');
-    let ntnsRe = /nt(\d+)ns(\d+)/;
-    async.each(
-      tdc,
-      (prm, callback) => {
-        let [nt_id, ns_id] = ntnsRe.exec(prm).slice(1, 3);
-        sendRequest(nt_id, ns_id);
-        callback();
-      },
-      (err) => {
-        if (err) {
-          console.error('Error occured in async udp send: ', err);
-        } else {
-          setTimeout(() => {
-            if (requestCounter > 0) {
-              waitingResponse.status(200).send(JSON.stringify(exchangeResult));
-              socket.close();            
-            }
-          }, 5000);
-        }
-      }
-    );
+    iterator = reqIterator(tdc); // Инициализация итератора
+    iterator.next();  // Первый пинок итератору. Дальше управляется ответами.
   };
 
-
   socket.bind(localPort);
-
   return udpRequester;
 }
 
