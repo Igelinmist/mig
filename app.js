@@ -1,7 +1,9 @@
-var route = require('./services/routes').router;
-var app = require('./services/routes').express();
+let route = require('./controllers/api').router;
+let express = require('./controllers/api').express;
+let udpListener = require('./controllers/udp_listener');
+let app = express();
 
-var http = require('http');
+let http = require('http');
 
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,21 +15,20 @@ app.use(function (req, res, next) {
 
 app.use('/', route);
 
-app.use(function(req, res, next){
+app.use(function(req, res){
     console.error('Not found URL: %s',req.url);
     res.status(404).send({ error: 'Not found' });
 });
 
-app.use(function(err, req, res, next){
+app.use(function(err, req, res){
     console.error('Internal error(%d): %s',res.statusCode,err.message);
     res.status(err.status || 500).send({ error: err.message });
 });
 
-var server = http.createServer(app);
+let server = http.createServer(app);
 server.listen(1337, function() {
     console.log('Express server listening on port 1337');
 });
 
 
-var udpListener = require('./services/udp_listener');
 udpListener.run();

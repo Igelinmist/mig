@@ -8,7 +8,7 @@ function run() {
 
 	let udpListener = dgram.createSocket('udp4');
 
-	let rValue = require('../routines').rValue;
+	let rValue = require('../routines/index').rValue;
 	/*
 		// с++ Структуры udp пакетов данных
 

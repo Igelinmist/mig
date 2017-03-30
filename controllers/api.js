@@ -1,11 +1,8 @@
 let express = require('express');
 let async = require('async');
-
 let router = express.Router();
-
 let redisClient = require('redis'),
     redisDB = redisClient.createClient();
-
 
 router.get('/api', function (req, res) {
     res.send('API is running');
@@ -76,7 +73,7 @@ router.get('/api/nt/:nt_id/ns/:ns_id', (req, res) => {
 
 router.get('/api/tagcache', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  var udpRequester = require('../udp_request')(res);
+  let udpRequester = require('./udp_requester')(res);
   let tdc = req.query.tdc;
   udpRequester.askLast32Values(tdc);
 });
