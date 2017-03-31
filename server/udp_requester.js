@@ -1,4 +1,4 @@
-function init(waitingResponse, options={}) {  
+function init(waitingResponse, options={}) {
   const STATUS_OK = 0;
   const STATUS_SOCKET_ERROR = 1;
   const STATUS_TIMEOUT = 2;
@@ -23,7 +23,7 @@ function init(waitingResponse, options={}) {
   
   let socket = require('dgram').createSocket('udp4');
   
-  socket.on('error', (err) => {
+  socket.on('error', () => {
      pushResult(STATUS_SOCKET_ERROR);
   });
 
@@ -61,11 +61,11 @@ function init(waitingResponse, options={}) {
     };
     reqStruct.pack(ptr, req);
     socket.send(ptr.buf, destPort, destServ);
-  };
+  }
   
-  let rValue = require('../routines').rValue;
+  let rValue = require('./utils').rValue;
 
-  socket.on('message', (msg, rinfo) => {
+  socket.on('message', (msg) => {
     // Разбираем заголовок
     let hdr = udpResHeader.parse(msg.slice(0,16));
     // Разбираем исторические значения
@@ -79,7 +79,7 @@ function init(waitingResponse, options={}) {
 
   function pushResult(status) {
     socket.close();
-    for (var key in exchangeResult) {
+    for (let key in exchangeResult) {
       exchangeResult[key].data.sort((a, b) => {
         return a[0] - b[0];
       });
@@ -109,7 +109,7 @@ function init(waitingResponse, options={}) {
 
   udpRequester.askLast32Values = (tdc) => {
     // Инициализация объекта ответа (хоть чем-то ответить...)
-    let names = require('../routines/names');
+    let names = require('../db/names');
     tdc.map((tag) => {
       exchangeResult[tag] = {
         data: [],
