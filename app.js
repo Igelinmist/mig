@@ -1,8 +1,7 @@
-let route = require('./controllers/api').router;
-let express = require('./controllers/api').express;
-let udpListener = require('./controllers/udp_listener');
+let route = require('./server').router;
+let express = require('./server').express;
+let udpListener = require('./server/udp_listener');
 let app = express();
-
 let http = require('http');
 
 app.use(function (req, res, next) {
@@ -29,6 +28,5 @@ let server = http.createServer(app);
 server.listen(1337, function() {
     console.log('Express server listening on port 1337');
 });
-
 
 udpListener.run();

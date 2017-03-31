@@ -63,7 +63,7 @@ function init(waitingResponse, options={}) {
     socket.send(ptr.buf, destPort, destServ);
   }
   
-  let rValue = require('../routines/index').rValue;
+  let rValue = require('./utils').rValue;
 
   socket.on('message', (msg) => {
     // Разбираем заголовок
