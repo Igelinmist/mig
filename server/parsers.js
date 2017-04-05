@@ -16,12 +16,8 @@ var broadcastTables = {
   udpTag: new Parser()
     .floatle('value')
     .uint16le('sw'),
-  getHdr: function(buf) {
-    return broadcastTables.udpHeader.parse(buf);
-  },
-  getTag: function(buf) {
-    return broadcastTables.udpTag.parse(buf);
-  }
+  getHdr: function(buf) {return broadcastTables.udpHeader.parse(buf)},
+  getTag: function(buf) {return broadcastTables.udpTag.parse(buf)}
 }
 
 var last32Resp = {
@@ -36,12 +32,8 @@ var last32Resp = {
     .uint32le('tt')
     .int32le('r')
     .floatle('value'),
-  getHdr: function(buf) {
-    return last32Resp.hdrParser.parse(buf);
-  },
-  getVal: function(buf) {
-    return last32Resp.valParser.parse(buf);
-  }
+  getHdr: function(buf) {return last32Resp.hdrParser.parse(buf)},
+  getVal: function(buf) {return last32Resp.valParser.parse(buf)}
 }
 
 function last32Req(localPort, nt, ns) {

@@ -27,7 +27,9 @@ function init(waitingResponse, options={}) {
     let hdr = last32Resp.getHdr(msg.slice(0,16));
     for (let i = 0; i < hdr.d; i++) {
       let tag = last32Resp.getVal(msg.slice(16 + i * 12, 16 + (i + 1) * 12));
-      exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].data.push([(tag.tt + 21600) * 1000, rValue(tag.value)]);
+      if (new Date().getTime() - tag.tt * 1000 < 1800000) {
+        exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].data.push([(tag.tt + 21600) * 1000, rValue(tag.value)]);
+      }
     }
     iterator.next(true);
   });
@@ -46,11 +48,9 @@ function init(waitingResponse, options={}) {
     let mesRes = false;
     for (let key in tdc) {
       // Each tdc element look like 'nt54ns32'
-      let [nt, ns] = tdc[key].substring(2).split('ns').map((el) => parseInt(el));
+      let [nt, ns] = tdc[key].match(/^nt(\d+)ns(\d+)$/).slice(1, 3);
       sendRequest(nt, ns);
-      timeoutId = setTimeout(() => {
-        pushResult(STATUS_TIMEOUT);
-      }, 5000);
+      timeoutId = setTimeout(pushResult, 5000, STATUS_TIMEOUT);
       mesRes = yield;
       if (mesRes) clearTimeout(timeoutId);
     }
@@ -65,12 +65,7 @@ function init(waitingResponse, options={}) {
   udpRequester.askLast32Values = (tdc) => {
     // Инициализация объекта ответа (хоть чем-то ответить...)
     let names = require('../db/names');
-    tdc.map((tag) => {
-      exchangeResult[tag] = {
-        data: [],
-        label: names[tag]
-      }
-    });
+    tdc.map((tag) => exchangeResult[tag] = {data: [], label: names[tag]});
     iterator = reqIterator(tdc); // Инициализация итератора
     iterator.next();  // Первый пинок итератору. Дальше управляется ответами.
   };
