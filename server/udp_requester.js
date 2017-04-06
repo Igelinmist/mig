@@ -9,6 +9,8 @@ function init(waitingResponse, options={}) {
   const STATUS_OK = 0;
   const STATUS_SOCKET_ERROR = 1;
   const STATUS_TIMEOUT = 2;
+
+  let timeEdge = new Date().getTime() - 1800000;
   
   socket.on('error', () => {
      pushResult(STATUS_SOCKET_ERROR);
@@ -27,7 +29,7 @@ function init(waitingResponse, options={}) {
     let hdr = last32Resp.getHdr(msg.slice(0,16));
     for (let i = 0; i < hdr.d; i++) {
       let tag = last32Resp.getVal(msg.slice(16 + i * 12, 16 + (i + 1) * 12));
-      if (new Date().getTime() - tag.tt * 1000 < 1800000) {
+      if (tag.tt * 1000 > timeEdge) {
         exchangeResult[`nt${hdr.nt}ns${hdr.ns}`].data.push([(tag.tt + 21600) * 1000, rValue(tag.value)]);
       }
     }
